@@ -33,15 +33,10 @@ import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.deserialization.EnumDese
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.internal.util.IdentifiableCollector;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.internal.util.MostSpecificTypeTokenComparator;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.serialization.EnumSerializer;
-import org.eclipse.digitaltwin.aas4j.v3.model.Environment;
-import org.eclipse.digitaltwin.aas4j.v3.model.Identifiable;
-import org.eclipse.digitaltwin.aas4j.v3.model.Key;
-import org.eclipse.digitaltwin.aas4j.v3.model.KeyTypes;
-import org.eclipse.digitaltwin.aas4j.v3.model.Operation;
-import org.eclipse.digitaltwin.aas4j.v3.model.Referable;
-import org.eclipse.digitaltwin.aas4j.v3.model.Reference;
-import org.eclipse.digitaltwin.aas4j.v3.model.ReferenceTypes;
-import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElementList;
+import org.eclipse.digitaltwin.aas4j.v3.model.*;
+import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
+import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodelElementCollection;
+import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodelElementList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -423,5 +418,45 @@ public class AasUtils {
                 })
                 .sorted(Comparator.comparing(x -> x.getName()))
                 .collect(Collectors.toList());
+    }
+
+    public static String convertReferenceToIri(Reference reference) {
+        return reference.getKeys().stream().map(Key::getValue).reduce("", (init, next) -> init + next + "/");
+    }
+
+    public static List<String> createIrisForAllReferablesBeneath(Identifiable identifiable) {
+
+        ArrayList<String> iris = new ArrayList<>();
+        String base = identifiable.getId() + "/";
+        iris.add(base);
+
+        if (identifiable.getClass().isAssignableFrom(DefaultSubmodel.class)) {
+            Submodel submodel = (DefaultSubmodel) identifiable;
+            iris.addAll(recursiveBrowse(base, submodel.getSubmodelElements()));
+        }
+        return iris;
+    }
+
+    private static List<String> recursiveBrowse(String base, Collection<SubmodelElement> elements) {
+        ArrayList<String> iris = new ArrayList<>();
+        elements.forEach(el -> iris.add(base+el.getIdShort()+"/"));
+        iris.addAll(
+                elements.stream()
+                        .filter(el -> el.getClass().isAssignableFrom(DefaultSubmodelElementCollection.class))
+                        .map(el -> ((DefaultSubmodelElementCollection) el))
+                        .map(smec -> recursiveBrowse(base +smec.getIdShort()+"/", smec.getValue()))
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toList()));
+        iris.addAll(
+                elements.stream()
+                        .filter(el -> el.getClass().isAssignableFrom(DefaultSubmodelElementList.class))
+                        .map(el -> ((DefaultSubmodelElementList) el))
+                        .map(smel -> recursiveBrowse(base + smel.getIdShort()+"/", smel.getValue()))
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toList())
+        );
+        return iris;
+
+
     }
 }

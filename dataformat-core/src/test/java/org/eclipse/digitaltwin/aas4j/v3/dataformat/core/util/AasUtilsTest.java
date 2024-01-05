@@ -15,29 +15,21 @@
  */
 package org.eclipse.digitaltwin.aas4j.v3.dataformat.core.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.AASFull;
-import org.eclipse.digitaltwin.aas4j.v3.model.Environment;
-import org.eclipse.digitaltwin.aas4j.v3.model.KeyTypes;
-import org.eclipse.digitaltwin.aas4j.v3.model.Referable;
-import org.eclipse.digitaltwin.aas4j.v3.model.Reference;
-import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
-import org.eclipse.digitaltwin.aas4j.v3.model.SubmodelElement;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultEnvironment;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultKey;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultOperation;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultOperationVariable;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultProperty;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultReference;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodel;
-import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultSubmodelElementList;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.CustomSubmodel;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.Examples;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.References;
+import org.eclipse.digitaltwin.aas4j.v3.model.*;
+import org.eclipse.digitaltwin.aas4j.v3.model.impl.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import junitparams.JUnitParamsRunner;
+
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 @RunWith(JUnitParamsRunner.class)
 public class AasUtilsTest {
@@ -155,4 +147,23 @@ public class AasUtilsTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test
+    public void whenCreateIri_withModelReference_equalsSerializedId() {
+        String iriFromReference = AasUtils.convertReferenceToIri(References.REFERENCE_1);
+        List<String> irisForAllReferablesBeneath = AasUtils.createIrisForAllReferablesBeneath(References.PROPERTY_1);
+        assertTrue(irisForAllReferablesBeneath.contains(iriFromReference));
+
+        System.out.println(iriFromReference);
+    }
+
+    @Test
+    public void whenCreateIris_withSubmodelGiven_equalsCompleteList() {
+        List<String> irisSubmodel1 = AasUtils.createIrisForAllReferablesBeneath(AASFull.createSubmodel1());
+        assertEquals(irisSubmodel1.size(), 3);
+
+        List<String> irisSubmodel3 = AasUtils.createIrisForAllReferablesBeneath(AASFull.createSubmodel3());
+        assertEquals(irisSubmodel3.size(),14);
+
+
+    }
 }
